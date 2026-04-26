@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>ADEEL-MINI | Connect Bot</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;600;700;800&display=swap');
+        :root {
+            --pink: #ff2d78;
+            --purple: #9b5de5;
+            --orange: #f97316;
+            --green: #22c55e;
+            --bg: #0a0a0f;
+            --card-bg: rgba(255,255,255,0.04);
+            --border: rgba(255,255,255,0.08);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Space Grotesk', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body {
+            background: var(--bg);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: clamp(20px, 5vw, 40px) 20px;
+            overflow-x: hidden;
+        }
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(155,93,229,0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(155,93,229,0.04) 1px, transparent 1px);
+            background-size: 40px 40px;
+            z-index: -2;
+        }
+        .blob { position: fixed; border-radius: 50%; filter: blur(90px); z-index: -1; opacity: 0.3; }
+        .blob-1 { width: 350px; height: 350px; background: var(--purple); top: -80px; left: -80px; animation: bm 12s ease-in-out infinite alternate; }
+        .blob-2 { width: 250px; height: 250px; background: var(--pink); bottom: -60px; right: -60px; animation: bm 9s ease-in-out infinite alternate-reverse; }
+        @keyframes bm { 0% { transform: translate(0,0); } 100% { transform: translate(30px,25px); } }
+
+        /* MAINTENANCE OVERLAY */
+        #maintenanceOverlay {
+            position: fixed; inset: 0;
+            background: rgba(10,10,15,0.97);
+            backdrop-filter: blur(20px);
+            z-index: 9999; display: none;
+            align-items: center; justify-content: center;
+            padding: 20px;
+        }
+        .m-card {
+            background: rgba(255,45,120,0.06);
+            border: 1px solid rgba(255,45,120,0.2);
+            padding: 50px 36px;
+            border-radius: 28px;
+            text-align: center;
+            max-width: 420px;
+            width: 100%;
+        }
+        .m-icon { font-size: 3.5rem; color: var(--pink); margin-bottom: 20px; }
+        .m-title { font-size: 1.7rem; font-weight: 800; margin-bottom: 12px; }
+        .m-desc { color: #555; line-height: 1.7; margin-bottom: 28px; font-size: 0.9rem; }
+
+        /* TOAST */
+        #toast {
+            position: fixed; top: -100px; left: 50%;
+            transform: translateX(-50%);
+            background: rgba(10,10,15,0.95);
+            backdrop-filter: blur(15px);
+            border: 1px solid var(--purple);
+            border-radius: 14px;
+            padding: 14px 28px;
+            display: flex; align-items: center; gap: 10px;
+            z-index: 2000;
+            box-shadow: 0 8px 30px rgba(155,93,229,0.25);
+            transition: 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            width: max-content; max-width: 88%;
+            font-size: 0.9rem; font-weight: 600;
+        }
+        #toast.show { top: 24px; }
+        #toast i { color: var(--purple); }
+
+        /* CONTACT OVERLAY */
+        .overlay {
+            position: fixed; inset: 0;
+            background: rgba(10,10,15,0.92);
+            backdrop-filter: blur(20px);
+            z-index: 1500; display: none;
+            align-items: center; justify-content: center;
+            padding: 20px;
+        }
+        .overlay-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            padding: 40px 28px;
+            border-radius: 28px;
+            width: 100%; max-width: 380px;
+            text-align: center;
+            position: relative;
+        }
+        .close-x {
+            position: absolute; top: 18px; right: 20px;
+            color: #444; font-size: 1.3rem; cursor: pointer;
+            transition: 0.2s;
+        }
+        .close-x:hover { color: #fff; }
+        .contact-grid { display: grid; gap: 12px; margin-top: 28px; }
+        .c-link {
+            display: flex; align-items: center; justify-content: center;
+            gap: 12px; padding: 18px; border-radius: 16px;
+            text-decoration: none; color: #fff;
+            font-weight: 700; font-size: 0.9rem;
+            text-transform: uppercase; letter-spacing: 1px;
+            transition: 0.3s;
+        }
+        .c-wa { background: #25d366; box-shadow: 0 8px 20px rgba(37,211,102,0.25); }
+        .c-wa:hover { transform: translateY(-4px); filter: brightness(1.1); }
+
+        /* MAIN LAYOUT */
+        .wrapper { width: 100%; max-width: 430px; z-index: 10; }
+
+        /* HEADER STATS */
+        .stats-bar {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 10px; margin-bottom: 20px;
+        }
+        .sbar-item {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 14px;
+            text-align: center;
+        }
+        .sbar-val { font-size: 1.3rem; font-weight: 800; color: var(--purple); }
+        .sbar-lbl { font-size: 0.6rem; color: #333; text-transform: uppercase; letter-spacing: 1.5px; margin-top: 2px; }
+
+        /* CARD */
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 28px;
+            padding: clamp(28px, 5vw, 44px) clamp(22px, 4vw, 36px);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(20px);
+        }
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--purple), var(--pink), transparent);
+        }
+
+        /* BOT HEADER */
+        .bot-header { margin-bottom: 24px; }
+        .bot-avatar {
+            width: 72px; height: 72px;
+            border-radius: 20px;
+            background: linear-gradient(135deg, var(--purple), var(--pink));
+            display: inline-flex; align-items: center; justify-content: center;
+            font-size: 2rem;
+            margin-bottom: 14px;
+            animation: float-av 4s ease-in-out infinite;
+        }
+        @keyframes float-av { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+        .bot-title { font-size: 1.8rem; font-weight: 800; letter-spacing: -1px; background: linear-gradient(to right, #fff, var(--purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .online-badge {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: rgba(34,197,94,0.1);
+            border: 1px solid rgba(34,197,94,0.2);
+            color: var(--green);
+            padding: 4px 14px; border-radius: 100px;
+            font-size: 0.7rem; font-weight: 700;
+            letter-spacing: 1.5px; text-transform: uppercase;
+            margin-top: 8px;
+        }
+        .odot { width: 6px; height: 6px; background: var(--green); border-radius: 50%; animation: opulse 1.5s infinite; }
+        @keyframes opulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.5); opacity: 0.5; } }
+
+        /* INPUT SECTION */
+        .section-label {
+            font-size: 0.75rem; color: var(--purple);
+            font-weight: 700; text-transform: uppercase;
+            letter-spacing: 1.5px; margin-bottom: 12px; text-align: left;
+        }
+        .input-wrap {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 16px 20px;
+            margin-bottom: 16px;
+            display: flex; align-items: center; gap: 12px;
+            transition: 0.3s;
+        }
+        .input-wrap:focus-within { border-color: var(--purple); box-shadow: 0 0 0 3px rgba(155,93,229,0.1); }
+        .input-wrap i { color: #333; font-size: 1rem; }
+        input[type="tel"] {
+            background: transparent; border: none;
+            color: #fff; width: 100%; outline: none;
+            font-size: 1rem; font-weight: 600;
+            font-family: 'Space Grotesk', sans-serif;
+        }
+        input::placeholder { color: #333; }
+
+        /* BUTTONS */
+        .btn {
+            width: 100%; padding: 18px;
+            border-radius: 16px; border: none;
+            font-weight: 700; font-size: 0.9rem;
+            cursor: pointer; transition: 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+        }
+        .btn:hover { transform: scale(1.02); filter: brightness(1.08); }
+        .btn-gen {
+            background: linear-gradient(135deg, var(--purple), var(--pink));
+            color: #fff;
+            box-shadow: 0 10px 25px rgba(155,93,229,0.3);
+        }
+        .btn-copy {
+            background: linear-gradient(135deg, var(--green), #16a34a);
+            color: #fff;
+            box-shadow: 0 10px 25px rgba(34,197,94,0.25);
+        }
+        .btn-ghost {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: #555;
+            margin-top: 10px;
+        }
+        .btn-ghost:hover { color: #fff; border-color: rgba(255,255,255,0.2); }
+
+        /* LOADER */
+        .loader { display: none; padding: 36px 0; text-align: center; }
+        .ring {
+            width: 48px; height: 48px;
+            border: 3px solid rgba(155,93,229,0.1);
+            border-top-color: var(--purple);
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            margin: 0 auto 16px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loader-text { font-size: 0.8rem; color: var(--purple); font-weight: 600; letter-spacing: 2px; text-transform: uppercase; }
+
+        /* CODE DISPLAY */
+        .code-box {
+            background: rgba(155,93,229,0.05);
+            border: 2px dashed rgba(155,93,229,0.2);
+            border-radius: 20px;
+            padding: 28px;
+            margin: 20px 0;
+            font-family: monospace;
+            font-size: clamp(2rem, 7vw, 2.8rem);
+            font-weight: 900;
+            color: var(--purple);
+            letter-spacing: 10px;
+        }
+
+        /* STEPS */
+        .steps {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 20px;
+            margin-top: 20px;
+            text-align: left;
+        }
+        .step {
+            display: flex; gap: 12px; align-items: flex-start;
+            margin-bottom: 10px; font-size: 0.82rem; color: #444; line-height: 1.5;
+        }
+        .step:last-child { margin-bottom: 0; }
+        .step-num {
+            width: 22px; height: 22px; min-width: 22px;
+            background: linear-gradient(135deg, var(--purple), var(--pink));
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.65rem; font-weight: 800; color: #fff;
+        }
+
+        .footer { margin-top: 24px; text-align: center; font-size: 0.72rem; color: #222; letter-spacing: 1px; }
+        .footer span { color: var(--purple); font-weight: 700; }
+
+        @media (max-width: 380px) { .card { padding: 24px 18px; } .bot-title { font-size: 1.5rem; } }
+    </style>
+</head>
+<body>
+    <!-- Blobs -->
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+
+    <!-- Maintenance Overlay -->
+    <div id="maintenanceOverlay">
+        <div class="m-card">
+            <div class="m-icon"><i class="fas fa-wrench"></i></div>
+            <div class="m-title">Under Maintenance</div>
+            <p class="m-desc">We're upgrading the system. Please check back soon for a better experience.</p>
+            <button class="btn btn-gen" onclick="document.getElementById('maintenanceOverlay').style.display='none'">
+                <i class="fas fa-arrow-left"></i> Go Back
+            </button>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast"><i class="fas fa-circle-check"></i><span id="toast-msg">Done</span></div>
+
+    <!-- Contact Overlay -->
+    <div id="contactOverlay" class="overlay">
+        <div class="overlay-card">
+            <i class="fas fa-times close-x" onclick="toggleContact()"></i>
+            <h2 style="margin-bottom:8px;font-size:1.4rem">Contact Owner</h2>
+            <p style="color:#444;font-size:0.85rem">Reach out for support or questions.</p>
+            <div class="contact-grid">
+                <a href="https://wa.me/923035512967" target="_blank" class="c-link c-wa">
+                    <i class="fab fa-whatsapp"></i> WhatsApp Owner
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="wrapper">
+        <!-- Stats Bar -->
+        <div class="stats-bar">
+            <div class="sbar-item">
+                <div class="sbar-val" id="active">--</div>
+                <div class="sbar-lbl">Active</div>
+            </div>
+            <div class="sbar-item">
+                <div class="sbar-val" id="total">--</div>
+                <div class="sbar-lbl">Total</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <!-- Bot Header -->
+            <div class="bot-header">
+                <div class="bot-avatar">🤖</div>
+                <div class="bot-title">ADEEL-MINI</div>
+                <div class="online-badge"><div class="odot"></div> System Online</div>
+            </div>
+
+            <!-- Input View -->
+            <div id="inputView">
+                <p class="section-label"><i class="fas fa-mobile-alt"></i> &nbsp;Your Number</p>
+                <div class="input-wrap">
+                    <i class="fas fa-globe"></i>
+                    <input type="tel" id="num" placeholder="923001234567" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+                </div>
+                <button class="btn btn-gen" onclick="getPair()">
+                    <i class="fas fa-key"></i> Generate Code
+                </button>
+            </div>
+
+            <!-- Loader -->
+            <div id="loading" class="loader">
+                <div class="ring"></div>
+                <div class="loader-text">Connecting...</div>
+            </div>
+
+            <!-- Result View -->
+            <div id="resultView" style="display:none">
+                <div class="code-box" id="code">------</div>
+                <button class="btn btn-copy" onclick="copy()">
+                    <i class="fas fa-copy"></i> Copy Code
+                </button>
+            </div>
+
+            <!-- Steps -->
+            <div class="steps">
+                <div class="step"><div class="step-num">1</div><span>Open <b>WhatsApp</b> on your phone</span></div>
+                <div class="step"><div class="step-num">2</div><span>Go to <b>Settings → Linked Devices</b></span></div>
+                <div class="step"><div class="step-num">3</div><span>Tap <b>Link with phone number</b> and enter the code</span></div>
+            </div>
+
+            <button class="btn btn-ghost" onclick="toggleContact()">
+                <i class="fas fa-headset"></i> Contact Owner
+            </button>
+        </div>
+
+        <div class="footer">Built with 💜 by <span>ADEEL-MINI</span></div>
+    </div>
+
+    <script>
+        const MAINTENANCE_MODE = 'no';
+        const HEROKU_URL = window.location.origin;
+        const API = `${HEROKU_URL}/code`;
+
+        function checkMaintenance() {
+            if (MAINTENANCE_MODE.toLowerCase() === 'yes') {
+                document.getElementById('maintenanceOverlay').style.display = 'flex';
+            }
+        }
+
+        function toggleContact() {
+            const o = document.getElementById('contactOverlay');
+            o.style.display = o.style.display === 'flex' ? 'none' : 'flex';
+        }
+
+        function showToast(msg, isErr = false) {
+            const t = document.getElementById('toast');
+            const icon = t.querySelector('i');
+            document.getElementById('toast-msg').innerText = msg;
+            icon.className = isErr ? 'fas fa-circle-xmark' : 'fas fa-circle-check';
+            t.style.borderColor = isErr ? 'var(--pink)' : 'var(--purple)';
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 3000);
+        }
+
+        async function fetchStats() {
+            try {
+                const r = await fetch(`${API}/api/active`);
+                const d = await r.json();
+                document.getElementById('active').innerText = d.count ?? d.active ?? 0;
+                document.getElementById('total').innerText = d.total ?? 0;
+            } catch(e) {
+                document.getElementById('active').innerText = '—';
+                document.getElementById('total').innerText = '—';
+            }
+        }
+
+        async function getPair() {
+            const n = document.getElementById('num').value.trim();
+            if (n.length < 7) return showToast('Enter a valid number!', true);
+            document.getElementById('inputView').style.display = 'none';
+            document.getElementById('loading').style.display = 'block';
+            try {
+                const r = await fetch(`${API}/?number=${n}`);
+                const d = await r.json();
+                if (d.code) {
+                    document.getElementById('code').innerText = d.code;
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('resultView').style.display = 'block';
+                    showToast('Code Ready! Copy and paste in WhatsApp.');
+                } else { throw new Error(); }
+            } catch(e) {
+                showToast('Server busy, retrying...', true);
+                setTimeout(() => location.reload(), 2000);
+            }
+        }
+
+        function copy() {
+            const c = document.getElementById('code').innerText;
+            navigator.clipboard.writeText(c).then(() => {
+                showToast('Copied! Paste in WhatsApp now.');
+                setTimeout(() => {
+                    document.getElementById('resultView').style.display = 'none';
+                    document.getElementById('inputView').style.display = 'block';
+                    document.getElementById('num').value = '';
+                }, 2500);
+            }).catch(() => showToast('Copy failed, try manually.', true));
+        }
+
+        window.onload = () => {
+            checkMaintenance();
+            fetchStats();
+            setInterval(fetchStats, 15000);
+        };
+    </script>
+</body>
+</html>
